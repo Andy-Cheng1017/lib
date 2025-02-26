@@ -1,0 +1,19 @@
+{
+    "name" : "PlatformIO-lwIP",
+    "description": "LWIP for AT32",
+    "keywords": "LWIP,AT32, network",
+    "authors": [
+        {
+            "name": "ChengKaoFeng",
+            "url": "https://github.com/Andy-Cheng1017",
+            "maintainer": true
+        }
+    ],
+    "version" : "2.1.0",
+    "license": "MIT",
+    "frameworks": "at32firmlib",
+    "platforms": "arterytekat32",
+    "build" : {
+        "extraScript": "lib_build.py"
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "name" : "PlatformIO-Arduino",
+    "description": "Arduino for AT32",
+    "keywords": "Arduino ,AT32, port",
+    "authors": [
+        {
+            "name": "ChengKaoFeng",
+            "url": "https://github.com/Andy-Cheng1017",
+            "maintainer": true
+        }
+    ],
+    "license": "MIT",
+    "frameworks": "at32firmlib",
+    "platforms": "arterytekat32",
+    "build" : {
+        "extraScript": "lib_build.py"
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "name" : "PlatformIO-FreeRTOS",
+    "description": "FreeRTOS for AT32",
+    "keywords": "FreeRTOS,AT32",
+    "authors": [
+        {
+            "name": "ChengKaoFeng",
+            "url": "https://github.com/Andy-Cheng1017",
+            "maintainer": true
+        }
+    ],
+    "version" : "2.1.3",
+    "license": "MIT",
+    "frameworks": "at32firmlib",
+    "platforms": "arterytekat32",
+    "build" : {
+        "extraScript": "lib_build.py"
+    }
+}
