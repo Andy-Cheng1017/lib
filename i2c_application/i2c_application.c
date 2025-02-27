@@ -24,11 +24,6 @@
 
 #include "i2c_application.h"
 
-/** @addtogroup AT32F403A_407_middlewares_i2c_application_library
-  * @{
-  */
-
-
 /**
   * @brief get the dma transfer complete flag through the channel
   */

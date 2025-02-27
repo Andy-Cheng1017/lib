@@ -1,30 +1,53 @@
 #ifndef FG_RPM_H
 #define FG_RPM_H
 
-#include "at32f403a_407_tmr.h"
-#define FG_SAMPLE_NUM 4
+#include <stdbool.h>
+#include <stdint.h>
+
+#if defined(AT_START_F407) || defined(AT_START_F403A)
+#include "at32f403a_407.h"
+#elif defined AT_START_F403
+#include "at32f403.h"
+#elif defined AT_START_F413
+#include "at32f413.h"
+#elif defined AT_START_F415
+#include "at32f415.h"
+#elif defined AT_START_F421
+#include "at32f421.h"
+#elif defined AT_START_F425
+#include "at32f425.h"
+#elif defined AT_START_F435_437
+#include "at32f435_437.h"
+#endif
 
 typedef struct {
-  tmr_type *tmr_x;
+  tmr_type *h_tmr_x;
+  tmr_type *l_tmr_x;
   uint32_t exint_line;
-  uint32_t tmr_clk;
-  uint32_t tmr_clk_div;
-  uint32_t tmr_period_val;
   uint8_t motor_phase;
 
-  uint8_t sample_index;
-  bool count_flag;
-  uint16_t first_count;
-  bool timeout_flag;
-  uint16_t sample[FG_SAMPLE_NUM];
-  float rpm_ref_val;
+  uint32_t tmr_clk;
+  uint16_t h_tmr_div;
+  uint16_t l_tmr_div;
+  uint16_t h_tmr_period;
+  uint16_t l_tmr_period;
+  float h_rpm_ref_val;
+  float l_rpm_ref_val;
+
+  bool h_tmr_flag;
+  bool first_count_flag;
+  uint16_t h_first_count;
+  uint16_t l_first_count;
+  uint16_t sample;
 } FgParam_t;
 
 void FgInit(FgParam_t *fg_param);
 
-void FgIntEnable(FgParam_t *fg_param);
+void FgLowTmrIntHandler(FgParam_t *fg_param);
 
-void FgSampling(FgParam_t *fg_param);
+void FgHighTmrIntHandler(FgParam_t *fg_param);
+
+void FgExintIntSampling(FgParam_t *fg_param);
 
 void FgGetRPM(FgParam_t *fg_param, uint16_t *rpm);
 

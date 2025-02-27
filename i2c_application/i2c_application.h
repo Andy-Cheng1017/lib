@@ -31,12 +31,21 @@ extern "C" {
 #endif
 
 /* includes ------------------------------------------------------------------*/
+#if defined(AT_START_F407) || defined(AT_START_F403A)
 #include "at32f403a_407.h"
-
-/** @addtogroup AT32F403A_407_middlewares_i2c_application_library
-  * @{
-  */
-
+#elif defined AT_START_F403
+#include "at32f403.h"
+#elif defined AT_START_F413
+#include "at32f413.h"
+#elif defined AT_START_F415
+#include "at32f415.h"
+#elif defined AT_START_F421
+#include "at32f421.h"
+#elif defined AT_START_F425
+#include "at32f425.h"
+#elif defined AT_START_F435_437
+#include "at32f435_437.h"
+#endif
 
 /** @defgroup I2C_library_event_check_flag
   * @{
