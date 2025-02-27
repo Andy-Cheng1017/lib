@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V8.2.3 - Copyright (C) 2015 Real Time Engineers Ltd.
+    FreeRTOS V10.4.3 - Copyright (C) 2020 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -67,11 +67,11 @@
     1 tab == 4 spaces!
   *                       Copyright notice & Disclaimer
   *
-  * The software Board Support Package (BSP) that is made available to 
-  * download from Artery official website is the copyrighted work of Artery. 
-  * Artery authorizes customers to use, copy, and distribute the BSP 
-  * software and its related documentation for the purpose of design and 
-  * development in conjunction with Artery microcontrollers. Use of the 
+  * The software Board Support Package (BSP) that is made available to
+  * download from Artery official website is the copyrighted work of Artery.
+  * Artery authorizes customers to use, copy, and distribute the BSP
+  * software and its related documentation for the purpose of design and
+  * development in conjunction with Artery microcontrollers. Use of the
   * software is governed by this copyright notice and the following disclaimer.
   *
   * THIS SOFTWARE IS PROVIDED ON "AS IS" BASIS WITHOUT WARRANTIES,
@@ -88,17 +88,20 @@
 #define FREERTOS_CONFIG_H
 
 #ifdef __cplusplus
-    extern "C" {
+extern "C" {
 #endif
 
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
-    #include <stdint.h>
-    // static uint32_t systemcoreclock = 240000000;
-     volatile uint32_t debug_timerTick;
+#include <stdint.h>
+#ifdef AT_START_F407
+#include "system_at32f407.h"
+#elif defined AT_START_F415
+#include "system_at32f415.h"
+#elif defined AT_START_F421
+#include "system_at32f421.h"
+#endif
 #endif
 
-
-  
 /*-----------------------------------------------------------
  * Application specific definitions.
  *
@@ -106,78 +109,71 @@
  * application requirements.
  *
  * THESE PARAMETERS ARE DESCRIBED WITHIN THE 'CONFIGURATION' SECTION OF THE
- * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE. 
+ * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE.
  *
  * See http://www.freertos.org/a00110.html.
  *----------------------------------------------------------*/
-#define configUSE_PREEMPTION		1
-#define configUSE_IDLE_HOOK			0
-#define configUSE_TICK_HOOK			0
-// #define configCPU_CLOCK_HZ			( ( unsigned long ) systemcoreclock )	
-#define configCPU_CLOCK_HZ			( ( unsigned long ) 240000000 )
-#define configTICK_RATE_HZ			( ( TickType_t ) 1000 )
-#define configMAX_PRIORITIES		( 32 )
-#define configMINIMAL_STACK_SIZE	( ( unsigned short ) 128 )
-#define configSUPPORT_DYNAMIC_ALLOCATION        1       
-#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 30 * 1024 ) )
-#define configMAX_TASK_NAME_LEN		( 16 )
-#define configUSE_16_BIT_TICKS		0
-#define configIDLE_SHOULD_YIELD		1
-
+#define configUSE_PREEMPTION 1
+#define configUSE_IDLE_HOOK 0
+#define configUSE_TICK_HOOK 0
+#define configCPU_CLOCK_HZ ((unsigned long)system_core_clock)
+#define configTICK_RATE_HZ ((TickType_t)1000)
+#define configMAX_PRIORITIES (5)
+#define configMINIMAL_STACK_SIZE ((unsigned short)128)
+#define configSUPPORT_DYNAMIC_ALLOCATION 1
+#define configTOTAL_HEAP_SIZE ((size_t)(8 * 1024))
+#define configMAX_TASK_NAME_LEN (16)
+#define configUSE_16_BIT_TICKS 0
+#define configIDLE_SHOULD_YIELD 1
 
 /* Co-routine definitions. */
-#define configUSE_CO_ROUTINES 		0
-#define configMAX_CO_ROUTINE_PRIORITIES ( 2 )
-
-/* 调试时使用,在工程完成时需要屏蔽掉,因为会增加系统开销 */
-#define configUSE_TRACE_FACILITY              1  //为1启用可视化跟踪调试
-#define configGENERATE_RUN_TIME_STATS         1  //为1时启用运行时间统计功能
-#define configUSE_STATS_FORMATTING_FUNCTIONS	1  //与宏configUSE_TRACE_FACILITY同时为1时会编译下面3个函数
-                                                 //prvWriteNameToBuffer(),vTaskList(),
-                                                 //vTaskGetRunTimeStats()
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() (debug_timerTick = 0)
-#define portGET_RUN_TIME_COUNTER_VALUE()          debug_timerTick
+#define configUSE_CO_ROUTINES 0
+#define configMAX_CO_ROUTINE_PRIORITIES (2)
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
 
-#define INCLUDE_vTaskPrioritySet		1
-#define INCLUDE_uxTaskPriorityGet		1
-#define INCLUDE_vTaskDelete				1
-#define INCLUDE_vTaskCleanUpResources	0
-#define INCLUDE_vTaskSuspend			1
-#define INCLUDE_vTaskDelayUntil			1
-#define INCLUDE_vTaskDelay				1
+#define INCLUDE_vTaskPrioritySet 1
+#define INCLUDE_uxTaskPriorityGet 1
+#define INCLUDE_vTaskDelete 1
+#define INCLUDE_vTaskCleanUpResources 0
+#define INCLUDE_vTaskSuspend 1
+#define INCLUDE_vTaskDelayUntil 1
+#define INCLUDE_vTaskDelay 1
 #define INCLUDE_xTaskGetCurrentTaskHandle 1
 /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS
-	/* __BVIC_PRIO_BITS will be specified when CMSIS is being used. */
-	#define configPRIO_BITS       		__NVIC_PRIO_BITS
+/* __BVIC_PRIO_BITS will be specified when CMSIS is being used. */
+#define configPRIO_BITS __NVIC_PRIO_BITS
 #else
-	#define configPRIO_BITS       		4        /* 15 priority levels */
+#define configPRIO_BITS 4 /* 15 priority levels */
 #endif
 
 /* The lowest interrupt priority that can be used in a call to a "set priority"
 function. */
-#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY			0x0f
+#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY 0x0f
 
 /* The highest interrupt priority that can be used by any interrupt service
 routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT CALL
 INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT HAS A HIGHER
 PRIORITY THAN THIS! (higher priorities are lower numeric values. */
-#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY	0x01
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 0x01
 
 /* Interrupt priorities used by the kernel port layer itself.  These are generic
 to all Cortex-M ports, and do not rely on any particular library functions. */
-#define configKERNEL_INTERRUPT_PRIORITY 		( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
+#define configKERNEL_INTERRUPT_PRIORITY (configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS))
 /* !!!! configMAX_SYSCALL_INTERRUPT_PRIORITY must not be set to zero !!!!
 See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
-	
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS))
+
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
-#define configASSERT( x ) if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); for( ;; ); }	
-	
+#define configASSERT(x)       \
+  if ((x) == 0) {             \
+    taskDISABLE_INTERRUPTS(); \
+    for (;;);                 \
+  }
+
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */
 #define vPortSVCHandler SVC_Handler
@@ -185,8 +181,7 @@ standard names. */
 #define xPortSysTickHandler SysTick_Handler
 
 #ifdef __cplusplus
-    }
+}
 #endif
 
 #endif /* FREERTOS_CONFIG_H */
-
