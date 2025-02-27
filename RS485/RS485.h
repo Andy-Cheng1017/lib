@@ -2,7 +2,14 @@
 #define __RS485_H_
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifdef AT_START_F407
 #include "at32f403a_407.h"
+#elif defined AT_START_F415
+#include "at32f415.h"
+#elif defined AT_START_F421
+#include "at32f421.h"
+#endif
 
 #define SINGLE_DATA_MAX_SIZE 128
 

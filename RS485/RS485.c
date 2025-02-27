@@ -51,8 +51,11 @@ IRQn_Type Get_USART_IRQn(usart_type *uart) {
       return USART1_IRQn;
     case (uint32_t)USART2:
       return USART2_IRQn;
+#if defined(AT_START_F415) || defined(AT_START_F407)
     case (uint32_t)USART3:
       return USART3_IRQn;
+#endif
+#if defined(AT_START_F407)
     case (uint32_t)UART4:
       return UART4_IRQn;
     case (uint32_t)UART5:
@@ -63,6 +66,7 @@ IRQn_Type Get_USART_IRQn(usart_type *uart) {
       return UART7_IRQn;
     case (uint32_t)UART8:
       return UART8_IRQn;
+#endif
     default:
       return USART1_IRQn;
   }
