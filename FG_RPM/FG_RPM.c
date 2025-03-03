@@ -29,6 +29,10 @@ void FgInit(FgParam_t *fg_param) {
 }
 
 void FgLowTmrIntHandler(FgParam_t *fg_param) {
+  if (fg_param->h_tmr_flag == true) {
+    fg_param->sample = 0;
+  }
+
   fg_param->h_tmr_flag = true;
   fg_param->first_count_flag = false;
 
@@ -40,6 +44,7 @@ void FgLowTmrIntHandler(FgParam_t *fg_param) {
 
   tmr_counter_enable(fg_param->h_tmr_x, TRUE);
   tmr_counter_enable(fg_param->l_tmr_x, TRUE);
+  exint_interrupt_enable(fg_param->exint_line, TRUE);
 }
 
 void FgHighTmrIntHandler(FgParam_t *fg_param) {
@@ -65,12 +70,16 @@ void FgExintIntSampling(FgParam_t *fg_param) {
 
       fg_param->sample = sec_count - fg_param->l_first_count;
     }
-
+    // fg_param->first_count_flag = false;
     exint_interrupt_enable(fg_param->exint_line, FALSE);
   }
 }
 
 void FgGetRPM(FgParam_t *fg_param, uint16_t *rpm) {
+  if (fg_param->sample == 0) {
+    *rpm = 0;
+    return;
+  }
   if (fg_param->h_tmr_flag) {
     *rpm = (uint16_t)(fg_param->h_rpm_ref_val / ((float)fg_param->sample));
   } else {
