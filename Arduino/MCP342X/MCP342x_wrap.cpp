@@ -2,8 +2,10 @@
 #include "MCP342x.h"
 #include "Wire.h"
 
+#ifdef LOG_TAG
 #define LOG_TAG "MCP342x_wrap"
 #include "elog.h"
+#endif 
 
 MCP342x adc;
 

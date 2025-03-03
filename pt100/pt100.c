@@ -1,3 +1,5 @@
+#include <math.h>
+#include <stdbool.h>
 #include "pt100.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -31,7 +33,7 @@ MCP342x_error_t PT100_MCP_ReadAndCalcTemp(Pt100I2cParam_t *pt100, MCP342xChannel
 
   if (discriminant < 0) {
     *pt100_temp = 0xffff;  // 返回一个无效温度值
-    return errorDiscriminant;  
+    return errorDiscriminant;
   }
 
   float temperature = (-A + sqrtf(discriminant)) / (2.0f * B);

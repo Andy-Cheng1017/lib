@@ -28,12 +28,13 @@ extern "C" {
 }
 
 #include "i2c_application.h"
-// #include "wk_i2c.h"
-
-#define LOG_TAG "Arduino_Wire"
 
 #include "Wire.h"
+
+#ifdef LOG_TAG
+#define LOG_TAG "Arduino_Wire"
 #include "elog.h"
+#endif
 
 i2c_handle_type *g_wireHandle;
 
@@ -185,7 +186,9 @@ uint8_t TwoWire::endTransmission(uint8_t sendStop) {
   //   uint8_t ret = twi_writeTo(txAddress, txBuffer, txBufferLength, 1, sendStop);
   i2c_status_type ret = i2c_master_transmit(g_wireHandle, txAddress, txBuffer, txBufferLength, g_wireHandle->timeout);
   if (ret != I2C_OK) {
+#ifdef LOG_TAG
     log_e("I2C error: %d", ret);
+#endif
     return ret;
   }
   // reset tx buffer iterator vars

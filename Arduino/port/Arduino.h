@@ -30,8 +30,10 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef LOG_TAG
 #define LOG_TAG "Arduino"
 #include "elog.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,16 +139,20 @@ class MySerial : public Print {
   virtual size_t write(uint8_t c) override {
     // 最簡單的做法：把單一字元呼叫到 log_i
     // (或你想直接 fwrite / putchar... 皆可)
+#ifdef LOG_TAG
     log_i("%c", c);
+#endif
     return 1;
   }
 
   // 覆寫另外一個 write(...)
   virtual size_t write(const uint8_t *buffer, size_t size) override {
     // 這裡示範一下：把多字元都印出
+#ifdef LOG_TAG
     for (size_t i = 0; i < size; i++) {
       log_i("%c", buffer[i]);
     }
+#endif
     return size;
   }
 };
