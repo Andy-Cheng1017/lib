@@ -6,83 +6,64 @@
 void FgInit(FgParam_t *fg_param) {
   fg_param->tmr_clk = system_core_clock;
 
-  fg_param->h_tmr_div = (uint16_t)tmr_div_value_get(fg_param->h_tmr_x);
-  fg_param->h_tmr_period = (uint16_t)tmr_period_value_get(fg_param->h_tmr_x);
-
-  fg_param->l_tmr_div = (uint16_t)tmr_div_value_get(fg_param->l_tmr_x);
-  fg_param->l_tmr_period = (uint16_t)tmr_period_value_get(fg_param->l_tmr_x);
-
-  fg_param->h_rpm_ref_val = 60 * ((float)(fg_param->tmr_clk) / ((fg_param->h_tmr_div + 1) * fg_param->motor_phase));
-  fg_param->l_rpm_ref_val = 60 * ((float)(fg_param->tmr_clk) / ((fg_param->l_tmr_div + 1) * fg_param->motor_phase));
-
-  tmr_counter_enable(fg_param->h_tmr_x, FALSE);
-  tmr_counter_enable(fg_param->l_tmr_x, FALSE);
-
-  tmr_counter_value_set(fg_param->h_tmr_x, 0);
-  tmr_counter_value_set(fg_param->l_tmr_x, 0);
-
-  tmr_interrupt_enable(fg_param->h_tmr_x, TMR_OVF_INT, TRUE);
-  tmr_interrupt_enable(fg_param->l_tmr_x, TMR_OVF_INT, TRUE);
-
-  tmr_counter_enable(fg_param->h_tmr_x, TRUE);
-  tmr_counter_enable(fg_param->l_tmr_x, TRUE);
-}
-
-void FgLowTmrIntHandler(FgParam_t *fg_param) {
-  if (fg_param->h_tmr_flag == true) {
-    fg_param->sample = 0;
+  for (int i = 0; i < fg_param->timer_count; i++) {
+    fg_param->tmr_div[i] = (uint16_t)tmr_div_value_get(fg_param->tmr_list[i]);
+    fg_param->tmr_period[i] = (uint16_t)tmr_period_value_get(fg_param->tmr_list[i]);
+    fg_param->rpm_ref_val[i] = 60 * ((float)(fg_param->tmr_clk) / ((fg_param->tmr_div[i] + 1) * fg_param->motor_phase));
+    tmr_counter_enable(fg_param->tmr_list[i], FALSE);
+    tmr_counter_value_set(fg_param->tmr_list[i], 0);
+    tmr_counter_enable(fg_param->tmr_list[i], TRUE);
+    tmr_interrupt_enable(fg_param->tmr_list[i], TMR_OVF_INT, TRUE);
   }
-
-  fg_param->h_tmr_flag = true;
-  fg_param->first_count_flag = false;
-
-  tmr_counter_enable(fg_param->h_tmr_x, FALSE);
-  tmr_counter_enable(fg_param->l_tmr_x, FALSE);
-
-  tmr_counter_value_set(fg_param->h_tmr_x, 0);
-  tmr_counter_value_set(fg_param->l_tmr_x, 0);
-
-  tmr_counter_enable(fg_param->h_tmr_x, TRUE);
-  tmr_counter_enable(fg_param->l_tmr_x, TRUE);
-  exint_interrupt_enable(fg_param->exint_line, TRUE);
 }
 
-void FgHighTmrIntHandler(FgParam_t *fg_param) {
-  if (!fg_param->first_count_flag) {
-    fg_param->h_tmr_flag = false;
+void FgTimerIntHandler(FgParam_t *fg_param, tmr_type *tmr_x) {
+  for (int i = 0; i < fg_param->timer_count; i++) {
+    if (fg_param->tmr_list[i] == tmr_x) {
+      fg_param->interrupt_count[i]++;
+    }
   }
 }
 
 void FgExintIntSampling(FgParam_t *fg_param) {
   if (!fg_param->first_count_flag) {
-    fg_param->h_first_count = tmr_counter_value_get(fg_param->h_tmr_x);
-    fg_param->l_first_count = tmr_counter_value_get(fg_param->l_tmr_x);
+    for (int i = 0; i < fg_param->timer_count; i++) {
+      fg_param->first_count[i] = tmr_counter_value_get(fg_param->tmr_list[i]);
+    }
 
     fg_param->first_count_flag = true;
   } else {
-    if (fg_param->h_tmr_flag) {
-      uint16_t sec_count = tmr_counter_value_get(fg_param->h_tmr_x);
-
-      fg_param->sample = sec_count - fg_param->h_first_count;
-
-    } else {
-      uint16_t sec_count = tmr_counter_value_get(fg_param->l_tmr_x);
-
-      fg_param->sample = sec_count - fg_param->l_first_count;
-    }
-    // fg_param->first_count_flag = false;
     exint_interrupt_enable(fg_param->exint_line, FALSE);
+    int i = 0;
+    for (i = 0; i < fg_param->timer_count; i++) {
+      uint16_t secon_count = tmr_counter_value_get(fg_param->tmr_list[i]);
+
+      if (fg_param->interrupt_count[i] == 0) {
+        fg_param->sample = secon_count - fg_param->first_count[i];
+        break;
+      } else if (fg_param->interrupt_count[i] == 1) {
+        if (secon_count < fg_param->first_count[i]) {
+          fg_param->sample = secon_count + (fg_param->tmr_period[i] - fg_param->first_count[i]);
+          break;
+        } else {
+          continue;
+        }
+      }
+    }
+    fg_param->rpm_ref_val_index = i;
   }
 }
 
 void FgGetRPM(FgParam_t *fg_param, uint16_t *rpm) {
-  if (fg_param->sample == 0) {
+  if (fg_param->first_count_flag == false) {
     *rpm = 0;
-    return;
-  }
-  if (fg_param->h_tmr_flag) {
-    *rpm = (uint16_t)(fg_param->h_rpm_ref_val / ((float)fg_param->sample));
   } else {
-    *rpm = (uint16_t)(fg_param->l_rpm_ref_val / ((float)fg_param->sample));
+    *rpm = (uint16_t)(fg_param->rpm_ref_val[fg_param->rpm_ref_val_index] / ((float)fg_param->sample));
+  }
+
+  exint_interrupt_enable(fg_param->exint_line, TRUE);
+  fg_param->first_count_flag = false;
+  for (int i = 0; i < fg_param->timer_count; i++) {
+    fg_param->interrupt_count[i] = 0;
   }
 }

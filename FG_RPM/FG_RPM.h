@@ -20,35 +20,34 @@
 #include "at32f435_437.h"
 #endif
 
+#define MAX_TIMERS 5
+
 typedef struct {
-  tmr_type *h_tmr_x;
-  tmr_type *l_tmr_x;
+  tmr_type *tmr_list[MAX_TIMERS];
+  uint8_t timer_count;  // 使用者設定的 timer 數量
+
   uint32_t exint_line;
   uint8_t motor_phase;
 
   uint32_t tmr_clk;
-  uint16_t h_tmr_div;
-  uint16_t l_tmr_div;
-  uint16_t h_tmr_period;
-  uint16_t l_tmr_period;
-  float h_rpm_ref_val;
-  float l_rpm_ref_val;
+  uint16_t tmr_div[MAX_TIMERS];
+  uint16_t tmr_period[MAX_TIMERS];
+  float rpm_ref_val[MAX_TIMERS];
+  uint8_t rpm_ref_val_index;
 
-  bool h_tmr_flag;
   bool first_count_flag;
-  uint16_t h_first_count;
-  uint16_t l_first_count;
+  uint16_t first_count[MAX_TIMERS];
   uint16_t sample;
+  uint8_t interrupt_count[MAX_TIMERS];
+
 } FgParam_t;
 
 void FgInit(FgParam_t *fg_param);
 
-void FgLowTmrIntHandler(FgParam_t *fg_param);
-
-void FgHighTmrIntHandler(FgParam_t *fg_param);
+void FgTimerIntHandler(FgParam_t *fg_param, tmr_type *tmr_x);
 
 void FgExintIntSampling(FgParam_t *fg_param);
 
 void FgGetRPM(FgParam_t *fg_param, uint16_t *rpm);
 
-#endif  // FG_RPM_H
+#endif  
