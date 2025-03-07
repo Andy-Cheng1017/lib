@@ -190,7 +190,9 @@ RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t
 
   uint16_t receivedCRC = (rs485->rx_pkg[i - 1] << 8) | rs485->rx_pkg[i - 2];
 
-  if (calculatedCRC != receivedCRC) return CRC_ERROR;
+  if (calculatedCRC != receivedCRC) {
+    return CRC_ERROR;
+  }
 
   return RS485_OK;
 }
