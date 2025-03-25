@@ -5,10 +5,6 @@
 #include "MCP342x_wrap.h"
 #include "i2c_application.h"
 
-#define R0 100.0f
-#define A 3.9083e-3f
-#define B -5.775e-7f
-
 typedef enum {
   MCP342xCHANNEL_1 = 0,
   MCP342xCHANNEL_2,
@@ -20,6 +16,10 @@ typedef struct {
   i2c_handle_type i2c_handle;
   uint8_t mcp_i2c_addr;
   uint8_t adc_gain;
+
+  uint16_t brige_resistor;
+  uint16_t current_limit_resistor;
+  uint8_t source_voltage;
 } Pt100I2cParam_t;
 
 void PT100_Init(Pt100I2cParam_t *pt100);
