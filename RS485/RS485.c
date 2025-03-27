@@ -5,6 +5,7 @@
 #define MAX_HANDLER_COUNT 10
 
 #define UPDATE_IDX(idx) ((idx) = (((idx) + 1) & MAX_BUF_MASK))
+#define DOWMDATE_IDX(idx) ((idx) = (((idx) - 1) & MAX_BUF_MASK))
 
 RsError_t err;
 typedef struct {
@@ -119,6 +120,7 @@ void RS485_Tx_Data_ISR(Rs485_t *rs485) {
         usart_data_transmit(rs485->UART, rs485->tx_circle_buf[rs485->tx_idex]);
       }
     } else {
+      DOWMDATE_IDX(rs485->tx_idex);
       usart_interrupt_enable(rs485->UART, USART_TDBE_INT, TRUE);
       return;
     }
@@ -156,7 +158,11 @@ RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t
   int i = 0;
   memset(rs485->rx_pkg, 0, MAX_PKG_SIZE);
   while (rs485->rx_circle_buf[rs485->decd_idex] != 0x7E) UPDATE_IDX(rs485->decd_idex);
-  if (rs485->decd_idex != rs485->rx_idex) {
+
+  uint16_t rx_last_7E_idx = rs485->rx_idex;
+  while (rs485->rx_circle_buf[rx_last_7E_idx] != 0x7E) DOWMDATE_IDX(rx_last_7E_idx);
+
+  if (rs485->decd_idex != rx_last_7E_idx) {
     while (rs485->rx_circle_buf[UPDATE_IDX(rs485->decd_idex)] != 0x7E) {
       if (rs485->rx_circle_buf[rs485->decd_idex] == 0x7D) {
         rs485->rx_pkg[i++] = rs485->rx_circle_buf[UPDATE_IDX(rs485->decd_idex)] ^ 0x20;
