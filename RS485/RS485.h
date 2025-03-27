@@ -21,7 +21,7 @@
 
 #define SINGLE_DATA_MAX_SIZE 128
 
-#define MAX_CIRCLE_BUFFER_SIZE 128
+#define MAX_CIRCLE_BUFFER_SIZE 256
 #define MAX_PKG_SIZE 128
 
 typedef enum {

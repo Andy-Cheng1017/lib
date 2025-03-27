@@ -478,7 +478,7 @@ RsError_t RS485WriteHandler(Rs485_t *rs485, uint16_t *data, uint8_t data_len) {
 RsError_t RS485Write(Rs485_t *rs485) {
   err = RsPkg(rs485, rs485->ip_addr, rs485->tx_Func, rs485->tx_Data, rs485->tx_Data_len);
 
-  rs485->tx_Func = 0;
+  // rs485->tx_Func = 0;
 
   if (err != RS485_OK) {
     return err;
