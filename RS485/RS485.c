@@ -74,7 +74,6 @@ IRQn_Type Get_USART_IRQn(usart_type *uart) {
 }
 
 void RsInit(Rs485_t *rs485) {
-  // usart_reset(rs485->UART);
   usart_init(rs485->UART, (uint32_t)rs485->BaudRate, rs485->DataBit, rs485->StopBit);
 
   usart_receiver_enable(rs485->UART, TRUE);
@@ -90,8 +89,6 @@ void RsInit(Rs485_t *rs485) {
   usart_interrupt_enable(rs485->UART, USART_IDLE_INT, TRUE);
   usart_interrupt_enable(rs485->UART, USART_RDBF_INT, TRUE);
   nvic_irq_enable(Get_USART_IRQn(rs485->UART), 0, 0);
-
-  // usart_interrupt_enable(rs485->UART, USART_TDBE_INT, TRUE);
 
   memset(rs485->rx_circle_buf, 0, MAX_CIRCLE_BUFFER_SIZE);
   rs485->rx_circle_buf[0] = 0x7E;
@@ -318,7 +315,7 @@ RsError_t RsSlaveDecdEncd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, ui
 }
 
 RsError_t RsMasterDecd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, uint8_t rx_Data_len) {
-  if (rx_Func == READ_HOLDING_REGISTERS) {
+  if (rx_Func == READ_HOLDING_REGISTERS || rx_Func == READ_INPUT_REGISTERS) {
     uint16_t Start_addr = rs485->reg_hdle_stat;
     for (int i = 0; i < rx_Data[0] / 2; i++) {
       uint16_t Data = rx_Data[i * 2 + 1] << 8 | rx_Data[i * 2 + 2];
@@ -383,17 +380,11 @@ RsError_t RsMasterEncd(Rs485_t *rs485, RsFunc_t Func, uint16_t stat_addr, uint16
                        uint8_t *tx_data_len) {
   tx_Data[0] = (stat_addr >> 8) & 0xFF;
   tx_Data[1] = stat_addr & 0xFF;
-  if (Func == READ_HOLDING_REGISTERS || Func == WRITE_SINGLE_REGISTER) {
+  if (Func == READ_HOLDING_REGISTERS || Func == WRITE_SINGLE_REGISTER || Func == READ_INPUT_REGISTERS) {
     tx_Data[2] = num_reg >> 8 & 0xFF;
     tx_Data[3] = num_reg & 0xFF;
     *tx_data_len = 4;
-    // if (Func == READ_HOLDING_REGISTERS && data_len != 2) {
-    //   return ENCODE_FOR_NUMBER;
-    // } else if (Func == WRITE_SINGLE_REGISTER && data_len != 2) {
-    //   return ENCODE_FOR_SINGLE_DATA;
-    // }
   } else if (Func == WRITE_MULTIPLE_REGISTERS) {
-    // if (data_len & 0X01) return ENCODE_FOR_NUMBER;
     tx_Data[2] = 0;
     tx_Data[3] = (data_len >> 1) & 0xFF;
     tx_Data[4] = data_len;
@@ -465,7 +456,7 @@ RsError_t RS485WriteHandler(Rs485_t *rs485, uint16_t *data, uint8_t data_len) {
   memset(rs485->tx_Data, 0, SINGLE_DATA_MAX_SIZE);
 
   if (rs485->Mode == MASTER) {
-    if (rs485->tx_Func == READ_HOLDING_REGISTERS) {
+    if (rs485->tx_Func == READ_HOLDING_REGISTERS || rs485->tx_Func == READ_INPUT_REGISTERS) {
       err = RsMasterEncd(rs485, rs485->tx_Func, rs485->reg_hdle_stat, rs485->reg_hdle_num, NULL, NULL, rs485->tx_Data, &rs485->tx_Data_len);
     } else if (rs485->tx_Func == WRITE_SINGLE_REGISTER) {
       err = RsMasterEncd(rs485, rs485->tx_Func, rs485->reg_hdle_stat, *data, NULL, NULL, rs485->tx_Data, &rs485->tx_Data_len);
