@@ -19,10 +19,10 @@
 #include "at32f435_437.h"
 #endif
 
-#define SINGLE_DATA_MAX_SIZE 128
+#define SINGLE_DATA_MAX_SIZE 512
 
-#define MAX_CIRCLE_BUFFER_SIZE 256
-#define MAX_PKG_SIZE 128
+#define MAX_CIRCLE_BUFFER_SIZE 1024
+#define MAX_PKG_SIZE 512
 
 typedef enum {
   BR_4800 = 4800,
