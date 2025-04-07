@@ -28,7 +28,7 @@ typedef enum {
 
 // 函式宣告
 void Conv_Init(SensConvVal_t *cfg);
-ErrConv_t Conv_GetVal_ADC(SensConvVal_t *cfg, uint16_t adc_val, int32_t *ret_val);
+// ErrConv_t Conv_GetVal_ADC(SensConvVal_t *cfg, uint16_t adc_val, int32_t *ret_val);
 ErrConv_t Conv_GetVal_Volt(SensConvVal_t *cfg, float volt, int32_t *ret_val);
 
 #endif  // SENSCONVVAL_H
