@@ -82,13 +82,13 @@ void RsInit(Rs485_t *rs485) {
   usart_hardware_flow_control_set(rs485->UART, USART_HARDWARE_FLOW_NONE);
 
   usart_parity_selection_config(rs485->UART, USART_PARITY_NONE);
-  nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
+  // nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
 
   usart_enable(rs485->UART, TRUE);
 
   usart_interrupt_enable(rs485->UART, USART_IDLE_INT, TRUE);
   usart_interrupt_enable(rs485->UART, USART_RDBF_INT, TRUE);
-  nvic_irq_enable(Get_USART_IRQn(rs485->UART), 0, 0);
+  // nvic_irq_enable(Get_USART_IRQn(rs485->UART), 0, 0);
 
   memset(rs485->rx_circle_buf, 0, MAX_CIRCLE_BUFFER_SIZE);
   rs485->rx_circle_buf[0] = 0x7E;
