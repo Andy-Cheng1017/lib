@@ -2,6 +2,7 @@
 #define __RS485_H_
 #include <stdint.h>
 #include <stdbool.h>
+#include "RS485_enum.h"
 
 #if defined(AT_START_F407) || defined(AT_START_F403A)
 #include "at32f403a_407.h"
@@ -30,50 +31,6 @@
 #ifndef MAX_PKG_SIZE
 #define MAX_PKG_SIZE 512
 #endif
-
-typedef enum {
-  BR_4800 = 4800,
-  BR_9600 = 9600,
-  BR_19200 = 19200,
-  BR_38400 = 38400,
-  BR_57600 = 57600,
-  BR_115200 = 115200,
-  BR_230400 = 230400,
-  BR_460800 = 460800,
-  BR_921600 = 921600,
-} baud_rate_t;
-
-typedef enum {
-  READ_COILS = 0x01,
-  READ_DISCRETE_INPUTS = 0x02,
-  READ_HOLDING_REGISTERS = 0x03,
-  READ_INPUT_REGISTERS = 0x04,
-  WRITE_SINGLE_COIL = 0x05,
-  WRITE_SINGLE_REGISTER = 0x06,
-  WRITE_MULTIPLE_COILS = 0x0F,
-  WRITE_MULTIPLE_REGISTERS = 0x10,
-} RsFunc_t;
-
-typedef enum {
-  RS485_OK = 0,
-  UNPKG_FINISH,
-  OTHER_SLAVE_ADDR,
-  UNPKG_OVER_PACKGE_SIZE,
-  UNPKG_TOO_SHORT,
-  CRC_ERROR,
-  ILLIGAL_FUNC,
-  ILLIGAL_DATA_ADDR,
-  ILLIGAL_DATA_VALUE,
-  SLAVE_DEVICE_FAILURE,
-  ENCODE_FOR_NUMBER,
-  ENCODE_FOR_SINGLE_DATA,
-  WRITE_REGISTERS_ERROR,
-} RsError_t;
-
-typedef enum {
-  MASTER,
-  SLAVE,
-} rs485_mode_t;
 
 typedef struct {
   usart_type *UART;
