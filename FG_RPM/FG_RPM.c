@@ -9,7 +9,7 @@ void FgInit(FgParam_t *fg_param) {
   for (int i = 0; i < fg_param->timer_count; i++) {
     fg_param->tmr_div[i] = (uint16_t)tmr_div_value_get(fg_param->tmr_list[i]);
     fg_param->tmr_period[i] = (uint16_t)tmr_period_value_get(fg_param->tmr_list[i]);
-    fg_param->rpm_ref_val[i] = 60 * ((float)(fg_param->tmr_clk) / ((fg_param->tmr_div[i] + 1) * fg_param->motor_phase));
+    fg_param->rpm_ref_val[i] = 60 * ((fg_param->tmr_clk) / ((fg_param->tmr_div[i] + 1) * fg_param->motor_phase));
     tmr_counter_enable(fg_param->tmr_list[i], FALSE);
     tmr_counter_value_set(fg_param->tmr_list[i], 0);
     tmr_counter_enable(fg_param->tmr_list[i], TRUE);
@@ -34,23 +34,22 @@ void FgExintIntSampling(FgParam_t *fg_param) {
     fg_param->first_count_flag = true;
   } else {
     exint_interrupt_enable(fg_param->exint_line, FALSE);
-    int i = 0;
-    for (i = 0; i < fg_param->timer_count; i++) {
+
+    for (int i = 0; i < fg_param->timer_count; i++) {
       uint16_t secon_count = tmr_counter_value_get(fg_param->tmr_list[i]);
 
       if (fg_param->interrupt_count[i] == 0) {
         fg_param->sample = secon_count - fg_param->first_count[i];
+        fg_param->rpm_ref_val_index = i;
         break;
       } else if (fg_param->interrupt_count[i] == 1) {
         if (secon_count < fg_param->first_count[i]) {
           fg_param->sample = secon_count + (fg_param->tmr_period[i] - fg_param->first_count[i]);
+          fg_param->rpm_ref_val_index = i;
           break;
-        } else {
-          continue;
         }
       }
     }
-    fg_param->rpm_ref_val_index = i;
   }
 }
 
@@ -58,7 +57,7 @@ void FgGetRPM(FgParam_t *fg_param, uint16_t *rpm) {
   if (fg_param->first_count_flag == false) {
     *rpm = 0;
   } else {
-    *rpm = (uint16_t)(fg_param->rpm_ref_val[fg_param->rpm_ref_val_index] / ((float)fg_param->sample));
+    *rpm = (uint16_t)(fg_param->rpm_ref_val[fg_param->rpm_ref_val_index] / fg_param->sample);
   }
 
   exint_interrupt_enable(fg_param->exint_line, TRUE);

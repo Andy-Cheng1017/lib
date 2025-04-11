@@ -1,7 +1,7 @@
 #include <string.h>
 #include "RS485.h"
 
-#define MAX_BUF_MASK (MAX_CIRCLE_BUFFER_SIZE - 1)
+#define MAX_BUF_MASK (rs485->circle_buffer_max_size - 1)
 #define MAX_HANDLER_COUNT 10
 
 #define UPDATE_IDX(idx) ((idx) = (((idx) + 1) & MAX_BUF_MASK))
@@ -82,21 +82,19 @@ void RsInit(Rs485_t *rs485) {
   usart_hardware_flow_control_set(rs485->UART, USART_HARDWARE_FLOW_NONE);
 
   usart_parity_selection_config(rs485->UART, USART_PARITY_NONE);
-  // nvic_priority_group_config(NVIC_PRIORITY_GROUP_4);
 
   usart_enable(rs485->UART, TRUE);
 
   usart_interrupt_enable(rs485->UART, USART_IDLE_INT, TRUE);
   usart_interrupt_enable(rs485->UART, USART_RDBF_INT, TRUE);
-  // nvic_irq_enable(Get_USART_IRQn(rs485->UART), 0, 0);
 
-  memset(rs485->rx_circle_buf, 0, MAX_CIRCLE_BUFFER_SIZE);
+  memset(rs485->rx_circle_buf, 0, rs485->circle_buffer_max_size);
   rs485->rx_circle_buf[0] = 0x7E;
   rs485->rx_idex = 0;
   rs485->rx_pkg_cplt_f = FALSE;
   rs485->decd_idex = 0;
 
-  memset(rs485->tx_circle_buf, 0, MAX_CIRCLE_BUFFER_SIZE);
+  memset(rs485->tx_circle_buf, 0, rs485->circle_buffer_max_size);
   rs485->tx_circle_buf[0] = 0x7E;
   rs485->tx_idex = 0;
   rs485->encd_idex = 0;
@@ -153,7 +151,7 @@ void RS485_Rx_Cplt_ISR(Rs485_t *rs485) {
 
 RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t *upk_data_len) {
   int i = 0;
-  memset(rs485->rx_pkg, 0, MAX_PKG_SIZE);
+  memset(rs485->rx_pkg, 0, rs485->pkg_max_size);
   while (rs485->rx_circle_buf[rs485->decd_idex] != 0x7E) UPDATE_IDX(rs485->decd_idex);
 
   uint16_t rx_last_7E_idx = rs485->rx_idex;
@@ -167,7 +165,7 @@ RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t
         rs485->rx_pkg[i++] = rs485->rx_circle_buf[rs485->decd_idex];
       }
 
-      if (i >= MAX_PKG_SIZE) return UNPKG_OVER_PACKGE_SIZE;
+      if (i >= rs485->pkg_max_size) return UNPKG_OVER_PACKGE_SIZE;
     }
   } else {
     rs485->rx_pkg_cplt_f = FALSE;
@@ -398,7 +396,7 @@ RsError_t RsMasterEncd(Rs485_t *rs485, RsFunc_t Func, uint16_t stat_addr, uint16
 }
 
 RsError_t RsPkg(Rs485_t *rs485, uint8_t DstIpAddr, RsFunc_t pkg_func, uint8_t *pkg_data, uint8_t pkg_data_len) {
-  memset(rs485->tx_pkg, 0, MAX_PKG_SIZE);
+  memset(rs485->tx_pkg, 0, rs485->pkg_max_size);
   rs485->tx_pkg[0] = DstIpAddr;
   rs485->tx_pkg[1] = pkg_func;
   for (int i = 0; i < pkg_data_len; i++) {
@@ -442,7 +440,7 @@ RsError_t RS485ReadHandler(Rs485_t *rs485) {
   }
   rs485->rx_Func = 0;
   rs485->rx_Data_len = 0;
-  memset(rs485->rx_Data, 0, SINGLE_DATA_MAX_SIZE);
+  memset(rs485->rx_Data, 0, rs485->data_max_size);
 
   if (err != RS485_OK) {
     return err;
@@ -453,7 +451,7 @@ RsError_t RS485ReadHandler(Rs485_t *rs485) {
 
 RsError_t RS485WriteHandler(Rs485_t *rs485, uint16_t *data, uint8_t data_len) {
   rs485->tx_Data_len = 0;
-  memset(rs485->tx_Data, 0, SINGLE_DATA_MAX_SIZE);
+  memset(rs485->tx_Data, 0, rs485->data_max_size);
 
   if (rs485->Mode == MASTER) {
     if (rs485->tx_Func == READ_HOLDING_REGISTERS || rs485->tx_Func == READ_INPUT_REGISTERS) {
