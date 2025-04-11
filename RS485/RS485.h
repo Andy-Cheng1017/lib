@@ -27,7 +27,10 @@
     static uint8_t name##_rx_Data[(data_max)];           \
     static uint8_t name##_tx_Data[(data_max)]
 
-#define RS485_BUFFERS_INIT(name)            \
+#define RS485_BUFFERS_INIT(name, data_max)            \
+    .data_max_size = data_max,                         \
+    .circle_buffer_max_size = (data_max) * 2,         \
+    .pkg_max_size = (data_max),                      \
     .rx_circle_buf = name##_rx_circle_buf,   \
     .tx_circle_buf = name##_tx_circle_buf,   \
     .rx_pkg = name##_rx_pkg,                 \
