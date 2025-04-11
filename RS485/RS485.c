@@ -17,12 +17,12 @@ typedef struct {
 static rs485_handler_entry_t g_handler_table[MAX_HANDLER_COUNT];
 static int g_handler_count = 0;
 
-bool RsRegHdle(Rs485_t *rs485, rs485_handler_t handler) {
+bool RsRegHdle(rs485_handler_t handler, uint16_t start_addr, uint16_t end_addr) {
   if (g_handler_count >= MAX_HANDLER_COUNT) {
     return false;
   }
-  g_handler_table[g_handler_count].start_addr = rs485->reg_hdle_stat;
-  g_handler_table[g_handler_count].end_addr = rs485->reg_hdle_end;
+  g_handler_table[g_handler_count].start_addr = start_addr;
+  g_handler_table[g_handler_count].end_addr = end_addr;
   g_handler_table[g_handler_count].handler = handler;
   g_handler_count++;
   return true;

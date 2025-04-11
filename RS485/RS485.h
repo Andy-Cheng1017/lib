@@ -124,7 +124,7 @@ typedef struct {
 
 typedef uint32_t (*rs485_handler_t)(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root);
 
-bool RsRegHdle(Rs485_t *rs485, rs485_handler_t handler);
+bool RsRegHdle(rs485_handler_t handler, uint16_t start_addr, uint16_t end_addr);
 
 void RsInit(Rs485_t *rs485);
 void RS485_Re_Config(Rs485_t *rs485);
