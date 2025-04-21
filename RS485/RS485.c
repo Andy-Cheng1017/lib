@@ -180,6 +180,7 @@ RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t
     rs485->ip_addr = rs485->rx_pkg[0];
   }
 
+  rs485->rx_ip_addr = rs485->rx_pkg[0];
   *upk_func = rs485->rx_pkg[1];
   for (int j = 0; j < i - 4; j++) {
     upk_data[j] = rs485->rx_pkg[j + 2];
@@ -226,18 +227,18 @@ RsError_t RsChkRegAddrVal(bool handler_found, uint32_t Data_return, RsFunc_t rx_
 RsError_t RsSlaveDecdEncd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, uint8_t rx_Data_len, RsFunc_t *tx_Func, uint8_t *tx_Data,
                           uint8_t *tx_Data_len) {
   if (rx_Func == READ_HOLDING_REGISTERS) {
-    uint16_t Start_addr = rx_Data[0] << 8 | rx_Data[1];
-    uint16_t Read_num = rx_Data[2] << 8 | rx_Data[3];
+    rs485->rx_reg_start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_num = rx_Data[2] << 8 | rx_Data[3];
 
-    tx_Data[0] = Read_num * 2;
+    tx_Data[0] = rs485->rx_reg_num * 2;
 
-    for (int i = 0; i < Read_num; i++) {
+    for (int i = 0; i < rs485->rx_reg_num; i++) {
       uint32_t Data_return = 0;
 
       bool handler_found = false;
       for (int j = 0; j < g_handler_count; j++) {
-        if (Start_addr + i >= g_handler_table[j].start_addr && Start_addr + i <= g_handler_table[j].end_addr) {
-          Data_return = g_handler_table[j].handler(READ_HOLDING_REGISTERS, Start_addr + i, NULL, NULL, rs485->root);
+        if (rs485->rx_reg_start_addr + i >= g_handler_table[j].start_addr && rs485->rx_reg_start_addr + i <= g_handler_table[j].end_addr) {
+          Data_return = g_handler_table[j].handler(READ_HOLDING_REGISTERS, rs485->rx_reg_start_addr + i, NULL, NULL, rs485->root);
           handler_found = true;
           break;
         }
@@ -250,19 +251,20 @@ RsError_t RsSlaveDecdEncd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, ui
     }
 
     *tx_Func = READ_HOLDING_REGISTERS;
-    *tx_Data_len = Read_num * 2 + 1;
+    *tx_Data_len = rs485->rx_reg_num * 2 + 1;
   } else if (rx_Func == WRITE_SINGLE_REGISTER) {
     tx_Data[0] = rx_Data[0];
     tx_Data[1] = rx_Data[1];
-    uint16_t Start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_num = 1;
     uint16_t Data = rx_Data[2] << 8 | rx_Data[3];
 
     uint32_t Data_return = 0;
 
     bool handler_found = false;
     for (int j = 0; j < g_handler_count; j++) {
-      if (Start_addr >= g_handler_table[j].start_addr && Start_addr <= g_handler_table[j].end_addr) {
-        Data_return = g_handler_table[j].handler(WRITE_SINGLE_REGISTER, Start_addr, Data, NULL, rs485->root);
+      if (rs485->rx_reg_start_addr >= g_handler_table[j].start_addr && rs485->rx_reg_start_addr <= g_handler_table[j].end_addr) {
+        Data_return = g_handler_table[j].handler(WRITE_SINGLE_REGISTER, rs485->rx_reg_start_addr, Data, NULL, rs485->root);
         handler_found = true;
         break;
       }
@@ -279,16 +281,16 @@ RsError_t RsSlaveDecdEncd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, ui
   } else if (rx_Func == WRITE_MULTIPLE_REGISTERS) {
     tx_Data[0] = rx_Data[0];
     tx_Data[1] = rx_Data[1];
-    uint16_t Start_addr = rx_Data[0] << 8 | rx_Data[1];
-    uint16_t Num_addr = rx_Data[2] << 8 | rx_Data[3];
-    for (int i = 0; i < Num_addr; i++) {
+    rs485->rx_reg_start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_num = rx_Data[2] << 8 | rx_Data[3];
+    for (int i = 0; i < rs485->rx_reg_num; i++) {
       uint16_t Data = rx_Data[i * 2 + 5] << 8 | rx_Data[i * 2 + 6];
       uint32_t Data_return = 0;
 
       bool handler_found = false;
       for (int j = 0; j < g_handler_count; j++) {
-        if (Start_addr + i >= g_handler_table[j].start_addr && Start_addr + i <= g_handler_table[j].end_addr) {
-          Data_return = g_handler_table[j].handler(WRITE_MULTIPLE_REGISTERS, Start_addr + i, Data, NULL, rs485->root);
+        if (rs485->rx_reg_start_addr + i >= g_handler_table[j].start_addr && rs485->rx_reg_start_addr + i <= g_handler_table[j].end_addr) {
+          Data_return = g_handler_table[j].handler(WRITE_MULTIPLE_REGISTERS, rs485->rx_reg_start_addr + i, Data, NULL, rs485->root);
           handler_found = true;
           break;
         }
@@ -314,15 +316,16 @@ RsError_t RsSlaveDecdEncd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, ui
 
 RsError_t RsMasterDecd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, uint8_t rx_Data_len) {
   if (rx_Func == READ_HOLDING_REGISTERS || rx_Func == READ_INPUT_REGISTERS) {
-    uint16_t Start_addr = rs485->reg_hdle_stat;
-    for (int i = 0; i < rx_Data[0] / 2; i++) {
+    rs485->rx_reg_start_addr = rs485->reg_hdle_stat;
+    rs485->rx_reg_num = rx_Data[0] / 2;
+    for (int i = 0; i < rs485->rx_reg_num; i++) {
       uint16_t Data = rx_Data[i * 2 + 1] << 8 | rx_Data[i * 2 + 2];
       uint32_t Data_return = 0;
 
       bool handler_found = false;
       for (int j = 0; j < g_handler_count; j++) {
-        if (Start_addr + i >= g_handler_table[j].start_addr && Start_addr + i <= g_handler_table[j].end_addr) {
-          Data_return = g_handler_table[j].handler(WRITE_MULTIPLE_REGISTERS, Start_addr + i, Data, NULL, rs485->root);
+        if (rs485->rx_reg_start_addr + i >= g_handler_table[j].start_addr && rs485->rx_reg_start_addr + i <= g_handler_table[j].end_addr) {
+          Data_return = g_handler_table[j].handler(WRITE_MULTIPLE_REGISTERS, rs485->rx_reg_start_addr + i, Data, NULL, rs485->root);
           handler_found = true;
           break;
         }
@@ -332,15 +335,16 @@ RsError_t RsMasterDecd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, uint8
       if (ret != RS485_OK) return ret;
     }
   } else if (rx_Func == WRITE_SINGLE_REGISTER) {
-    uint16_t Start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_num = 1;
     uint16_t Data = rx_Data[2] << 8 | rx_Data[3];
 
     uint32_t Data_return = 0;
 
     bool handler_found = false;
     for (int j = 0; j < g_handler_count; j++) {
-      if (Start_addr >= g_handler_table[j].start_addr && Start_addr <= g_handler_table[j].end_addr) {
-        Data_return = g_handler_table[j].handler(WRITE_SINGLE_REGISTER, Start_addr, Data, NULL, rs485->root);
+      if (rs485->rx_reg_start_addr >= g_handler_table[j].start_addr && rs485->rx_reg_start_addr <= g_handler_table[j].end_addr) {
+        Data_return = g_handler_table[j].handler(WRITE_SINGLE_REGISTER, rs485->rx_reg_start_addr, Data, NULL, rs485->root);
         handler_found = true;
         break;
       }
@@ -350,16 +354,16 @@ RsError_t RsMasterDecd(Rs485_t *rs485, RsFunc_t rx_Func, uint8_t *rx_Data, uint8
     if (ret != RS485_OK) return ret;
   } else if (rx_Func == WRITE_MULTIPLE_REGISTERS) {
     if (rx_Data[2] != rs485->tx_Data[2] || rx_Data[3] != rs485->tx_Data[3]) return WRITE_REGISTERS_ERROR;
-    uint16_t Start_addr = rx_Data[0] << 8 | rx_Data[1];
-    uint16_t Read_num = rx_Data[2] << 8 | rx_Data[3];
-    for (int i = 0; i < Read_num * 2; i += 2) {
+    rs485->rx_reg_start_addr = rx_Data[0] << 8 | rx_Data[1];
+    rs485->rx_reg_num = rx_Data[2] << 8 | rx_Data[3];
+    for (int i = 0; i < rs485->rx_reg_num * 2; i += 2) {
       uint16_t Data = rx_Data[i + 5] << 8 | rx_Data[i + 6];
       uint32_t Data_return = 0;
 
       bool handler_found = false;
       for (int j = 0; j < g_handler_count; j++) {
-        if (Start_addr + i >= g_handler_table[j].start_addr && Start_addr + i <= g_handler_table[j].end_addr) {
-          Data_return = g_handler_table[j].handler(WRITE_MULTIPLE_REGISTERS, Start_addr + i, Data, NULL, rs485->root);
+        if (rs485->rx_reg_start_addr + i >= g_handler_table[j].start_addr && rs485->rx_reg_start_addr + i <= g_handler_table[j].end_addr) {
+          Data_return = g_handler_table[j].handler(WRITE_MULTIPLE_REGISTERS, rs485->rx_reg_start_addr + i, Data, NULL, rs485->root);
           handler_found = true;
           break;
         }
@@ -438,9 +442,9 @@ RsError_t RS485ReadHandler(Rs485_t *rs485) {
   } else {
     err = RsMasterDecd(rs485, rs485->rx_Func, rs485->rx_Data, rs485->rx_Data_len);
   }
-  rs485->rx_Func = 0;
-  rs485->rx_Data_len = 0;
-  memset(rs485->rx_Data, 0, rs485->data_max_size);
+  // rs485->rx_Func = 0;
+  // rs485->rx_Data_len = 0;
+  // memset(rs485->rx_Data, 0, rs485->data_max_size);
 
   if (err != RS485_OK) {
     return err;

@@ -103,9 +103,13 @@ typedef struct {
   uint8_t *rx_pkg;
   uint8_t decd_idex;
 
+  uint16_t rx_ip_addr;
   RsFunc_t rx_Func;
   uint8_t *rx_Data;
   uint8_t rx_Data_len;
+
+  uint16_t rx_reg_start_addr;
+  uint16_t rx_reg_num;
 
   uint8_t *tx_circle_buf;
   uint8_t tx_idex;
