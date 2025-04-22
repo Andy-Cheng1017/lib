@@ -11,5 +11,6 @@ typedef struct {
   TickType_t start_tick;
 } ThresholdMonitor_t;
 
-bool check_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, int threshold, TickType_t delay_ms);
+bool over_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, int threshold, TickType_t delay_ms);
+bool under_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, int threshold, TickType_t delay_ms);
 #endif
