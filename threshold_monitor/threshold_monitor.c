@@ -11,16 +11,16 @@ bool over_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, i
       // 第一次超標
       monitor->over_limit = true;
       monitor->start_tick = now;
-      monitor->triggered = false;
-    } else if (!monitor->triggered && (now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms))) {
+      // monitor->triggered = false;
+    } else if ((now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms))) {
       // 超標時間已滿，觸發
-      monitor->triggered = true;
+      // monitor->triggered = true;
       return true;
     }
   } else {
     // 恢復正常，重設
     monitor->over_limit = false;
-    monitor->triggered = false;
+    // monitor->triggered = false;
   }
 
   return false;
@@ -31,20 +31,17 @@ bool under_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, 
 
   if (current_value <= threshold) {
     if (!monitor->over_limit) {
-      // 第一次低於閾值
       monitor->over_limit = true;
       monitor->start_tick = now;
-      monitor->triggered = false;
-    } else if (!monitor->triggered && (now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms))) {
-      // 低於閾值時間已滿，觸發
-      monitor->triggered = true;
+    } else if ((now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms))) {
       return true;
     }
   } else {
-    // 恢復正常，重設
     monitor->over_limit = false;
-    monitor->triggered = false;
   }
-
   return false;
+}
+
+void clear_threshold_monitor(ThresholdMonitor_t *monitor) {
+  monitor->over_limit = false;
 }
