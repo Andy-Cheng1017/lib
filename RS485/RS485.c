@@ -2,7 +2,7 @@
 #include "RS485.h"
 
 #define MAX_BUF_MASK (rs485->circle_buffer_max_size - 1)
-#define MAX_HANDLER_COUNT 10
+#define MAX_HANDLER_COUNT 20
 
 #define UPDATE_IDX(idx) ((idx) = (((idx) + 1) & MAX_BUF_MASK))
 #define DOWMDATE_IDX(idx) ((idx) = (((idx) - 1) & MAX_BUF_MASK))
