@@ -24,6 +24,9 @@
 
 #include "i2c_application.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 /**
  * @brief get the dma transfer complete flag through the channel
  */
@@ -154,6 +157,7 @@ i2c_status_type i2c_wait_end(i2c_handle_type* hi2c, uint32_t timeout) {
     if ((timeout--) == 0) {
       return I2C_ERR_TIMEOUT;
     }
+    vTaskDelay(1);
   }
 
   if (hi2c->error_code != I2C_OK) {
@@ -207,6 +211,7 @@ i2c_status_type i2c_wait_flag(i2c_handle_type* hi2c, uint32_t flag, uint32_t eve
 
         return I2C_ERR_TIMEOUT;
       }
+      vTaskDelay(1);
     }
   } else {
     while (i2c_flag_get(hi2c->i2cx, flag) == RESET) {
@@ -243,6 +248,7 @@ i2c_status_type i2c_wait_flag(i2c_handle_type* hi2c, uint32_t flag, uint32_t eve
 
         return I2C_ERR_TIMEOUT;
       }
+      vTaskDelay(1);
     }
   }
 
