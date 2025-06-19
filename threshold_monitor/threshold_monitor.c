@@ -3,7 +3,7 @@
 #include "task.h"
 #include "threshold_monitor.h"
 
-bool over_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, int threshold, TickType_t delay_ms) {
+bool over_threshold_with_delay(ThresholdMonitor_t *monitor, int16_t current_value, int16_t threshold, TickType_t delay_ms) {
   TickType_t now = xTaskGetTickCount();
 
   if (current_value >= threshold) {
@@ -12,7 +12,7 @@ bool over_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, i
       monitor->over_limit = true;
       monitor->start_tick = now;
       // monitor->triggered = false;
-    } else if ((now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms))) {
+    } else if ((now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms * 1000))) {
       // 超標時間已滿，觸發
       // monitor->triggered = true;
       return true;
@@ -26,14 +26,14 @@ bool over_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, i
   return false;
 }
 
-bool under_threshold_with_delay(ThresholdMonitor_t *monitor, int current_value, int threshold, TickType_t delay_ms) {
+bool under_threshold_with_delay(ThresholdMonitor_t *monitor, int16_t current_value, int16_t threshold, TickType_t delay_ms) {
   TickType_t now = xTaskGetTickCount();
 
   if (current_value <= threshold) {
     if (!monitor->over_limit) {
       monitor->over_limit = true;
       monitor->start_tick = now;
-    } else if ((now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms))) {
+    } else if ((now - monitor->start_tick >= pdMS_TO_TICKS(delay_ms * 1000))) {
       return true;
     }
   } else {
