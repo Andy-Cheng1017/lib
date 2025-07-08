@@ -157,7 +157,7 @@ void RS485_TxCplt_ISR(Rs485_t *rs485);
 RsError_t RS485_TxBuf_ISR(Rs485_t *rs485);
 RsError_t RS485_RxBuf_ISR(Rs485_t *rs485);
 
-void RS485_CorrectPolarity(Rs485_t *rs485);
+// void RS485_CorrectPolarity(Rs485_t *rs485);
 
 RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t *upk_data_len);
 

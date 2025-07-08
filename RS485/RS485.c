@@ -93,11 +93,11 @@ void RsInit(Rs485_t *rs485) {
   if (rs485->ic_type == NORMAL || rs485->ic_type == AUTO_POLARITY) {
     usart_interrupt_enable(rs485->UART, USART_TDC_INT, TRUE);
   }
-  if (rs485->ic_type == AUTO_POLARITY) {
-    usart_interrupt_enable(rs485->UART, USART_BF_INT, TRUE);
-    gpio_bits_reset(rs485->GPIO, rs485->GPIO_Pin);
-    rs485->PolState = RS485_STATE_READY;
-  }
+  // if (rs485->ic_type == AUTO_POLARITY) {
+  //   // usart_interrupt_enable(rs485->UART, USART_BF_INT, TRUE);
+  //   gpio_bits_reset(rs485->GPIO, rs485->GPIO_Pin);
+  //   // rs485->PolState = RS485_STATE_READY;
+  // }
 
   memset(rs485->rx_circle_buf, 0, rs485->circle_buffer_max_size);
   rs485->rx_circle_buf[0] = 0x7E;
@@ -165,13 +165,13 @@ void RS485_TxCplt_ISR(Rs485_t *rs485) {
   if (rs485->ic_type == NORMAL || rs485->ic_type == AUTO_POLARITY) gpio_bits_reset(rs485->GPIO, rs485->GPIO_Pin);
 }
 
-void RS485_CorrectPolarity(Rs485_t *rs485) {
-  if (rs485->ic_type == AUTO_POLARITY) {
-    // gpio_bits_set(rs485->GPIO, rs485->GPIO_Pin);
-    // rs485->PolState = RS485_STATE_POLCOR_WAIT;
-    // rs485->PolWaitDelay = xTaskGetTickCount() * portTICK_PERIOD_MS;
-  }
-}
+// void RS485_CorrectPolarity(Rs485_t *rs485) {
+//   if (rs485->ic_type == AUTO_POLARITY) {
+//     // gpio_bits_set(rs485->GPIO, rs485->GPIO_Pin);
+//     // rs485->PolState = RS485_STATE_POLCOR_WAIT;
+//     // rs485->PolWaitDelay = xTaskGetTickCount() * portTICK_PERIOD_MS;
+//   }
+// }
 
 RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t *upk_data_len) {
   int i = 0;
