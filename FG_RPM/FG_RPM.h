@@ -30,9 +30,9 @@ typedef struct {
   uint8_t motor_phase;
 
   uint32_t tmr_clk;
-  uint16_t tmr_div[MAX_TIMERS];
-  uint16_t tmr_period[MAX_TIMERS];
-  int32_t rpm_ref_val[MAX_TIMERS];
+  uint32_t tmr_div[MAX_TIMERS];
+  uint32_t tmr_period[MAX_TIMERS];
+  uint32_t rpm_ref_val[MAX_TIMERS];
   uint8_t rpm_ref_val_index;
 
   bool first_count_flag;

@@ -82,18 +82,36 @@ typedef enum {
   SLAVE,
 } rs485_mode_t;
 
+typedef enum {
+  NORMAL,
+  AUTO_POLARITY,
+  AUTO_DIRECTION,
+} rs485_ic_type_t;
+
+typedef enum {
+  RS485_STATE_READY,
+  RS485_STATE_POLCOR_WAIT,
+} RS485_AutoPolState_t;
+
 typedef struct {
   uint16_t data_max_size;
   uint16_t circle_buffer_max_size;
   uint16_t pkg_max_size;
 
   usart_type *UART;
+  gpio_type *GPIO;
+  uint16_t GPIO_Pin;
+  rs485_ic_type_t ic_type;
+  
   rs485_mode_t Mode;
   baud_rate_t BaudRate;
   usart_stop_bit_num_type StopBit;
   usart_data_bit_num_type DataBit;
   uint8_t ip_addr;
   bool root;
+
+  RS485_AutoPolState_t PolState;
+  uint16_t PolWaitDelay;
 
   uint8_t *rx_circle_buf;
   uint8_t rx_idex;
@@ -133,10 +151,13 @@ bool RsRegHdle(rs485_handler_t handler, uint16_t start_addr, uint16_t end_addr);
 void RsInit(Rs485_t *rs485);
 void RS485_Re_Config(Rs485_t *rs485);
 
-void RS485_Rx_Cplt_ISR(Rs485_t *rs485);
+void RS485_RxCplt_ISR(Rs485_t *rs485);
+void RS485_TxCplt_ISR(Rs485_t *rs485);
 
-void RS485_Tx_Data_ISR(Rs485_t *rs485);
-RsError_t RS485_Rx_Data_ISR(Rs485_t *rs485);
+RsError_t RS485_TxBuf_ISR(Rs485_t *rs485);
+RsError_t RS485_RxBuf_ISR(Rs485_t *rs485);
+
+void RS485_CorrectPolarity(Rs485_t *rs485);
 
 RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t *upk_data_len);
 

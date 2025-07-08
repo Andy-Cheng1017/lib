@@ -1,6 +1,9 @@
 #include <string.h>
 #include "RS485.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #define MAX_BUF_MASK (rs485->circle_buffer_max_size - 1)
 #define MAX_HANDLER_COUNT 20
 
@@ -87,6 +90,14 @@ void RsInit(Rs485_t *rs485) {
 
   usart_interrupt_enable(rs485->UART, USART_IDLE_INT, TRUE);
   usart_interrupt_enable(rs485->UART, USART_RDBF_INT, TRUE);
+  if (rs485->ic_type == NORMAL || rs485->ic_type == AUTO_POLARITY) {
+    usart_interrupt_enable(rs485->UART, USART_TDC_INT, TRUE);
+  }
+  if (rs485->ic_type == AUTO_POLARITY) {
+    usart_interrupt_enable(rs485->UART, USART_BF_INT, TRUE);
+    gpio_bits_reset(rs485->GPIO, rs485->GPIO_Pin);
+    rs485->PolState = RS485_STATE_READY;
+  }
 
   memset(rs485->rx_circle_buf, 0, rs485->circle_buffer_max_size);
   rs485->rx_circle_buf[0] = 0x7E;
@@ -106,7 +117,7 @@ void RS485_Re_Config(Rs485_t *rs485) {
   RsInit(rs485);
 }
 
-void RS485_Tx_Data_ISR(Rs485_t *rs485) {
+RsError_t RS485_TxBuf_ISR(Rs485_t *rs485) {
   while (UPDATE_IDX(rs485->tx_idex) != rs485->encd_idex) {
     if (usart_flag_get(rs485->UART, USART_TDBE_FLAG) == SET) {
       if (rs485->tx_circle_buf[rs485->tx_idex] == 0X7D) {
@@ -117,12 +128,13 @@ void RS485_Tx_Data_ISR(Rs485_t *rs485) {
     } else {
       DOWMDATE_IDX(rs485->tx_idex);
       usart_interrupt_enable(rs485->UART, USART_TDBE_INT, TRUE);
-      return;
+      return RS485_OK;
     }
   }
+  return RS485_OK;
 }
 
-RsError_t RS485_Rx_Data_ISR(Rs485_t *rs485) {
+RsError_t RS485_RxBuf_ISR(Rs485_t *rs485) {
   uint16_t data = usart_data_receive(rs485->UART);
 
   if (rs485->rx_first_pkg == 0) rs485->rx_first_pkg = data;
@@ -139,7 +151,7 @@ RsError_t RS485_Rx_Data_ISR(Rs485_t *rs485) {
   return RS485_OK;
 }
 
-void RS485_Rx_Cplt_ISR(Rs485_t *rs485) {
+void RS485_RxCplt_ISR(Rs485_t *rs485) {
   if (rs485->Mode == SLAVE && rs485->rx_first_pkg != rs485->ip_addr) {
     rs485->rx_first_pkg = 0;
     return;
@@ -147,6 +159,18 @@ void RS485_Rx_Cplt_ISR(Rs485_t *rs485) {
   rs485->rx_circle_buf[UPDATE_IDX(rs485->rx_idex)] = 0X7E;
   rs485->rx_pkg_cplt_f = TRUE;
   rs485->rx_first_pkg = 0;
+}
+
+void RS485_TxCplt_ISR(Rs485_t *rs485) {
+  if (rs485->ic_type == NORMAL || rs485->ic_type == AUTO_POLARITY) gpio_bits_reset(rs485->GPIO, rs485->GPIO_Pin);
+}
+
+void RS485_CorrectPolarity(Rs485_t *rs485) {
+  if (rs485->ic_type == AUTO_POLARITY) {
+    // gpio_bits_set(rs485->GPIO, rs485->GPIO_Pin);
+    // rs485->PolState = RS485_STATE_POLCOR_WAIT;
+    // rs485->PolWaitDelay = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  }
 }
 
 RsError_t RsUnpkg(Rs485_t *rs485, RsFunc_t *upk_func, uint8_t *upk_data, uint8_t *upk_data_len) {
@@ -419,12 +443,22 @@ RsError_t RsPkg(Rs485_t *rs485, uint8_t DstIpAddr, RsFunc_t pkg_func, uint8_t *p
     }
   }
   rs485->tx_circle_buf[UPDATE_IDX(rs485->encd_idex)] = 0x7E;
-  RS485_Tx_Data_ISR(rs485);
+  RS485_TxBuf_ISR(rs485);
 
   return RS485_OK;
 }
 
-bool RsChkAvailable(Rs485_t *rs485) { return rs485->rx_pkg_cplt_f; }
+bool RsChkAvailable(Rs485_t *rs485) {
+  // if (rs485->ic_type == AUTO_POLARITY) {
+  //   if (rs485->PolState == RS485_STATE_POLCOR_WAIT) {
+  //     if (xTaskGetTickCount() * portTICK_PERIOD_MS - rs485->PolWaitDelay >= 500) {
+  //       gpio_bits_reset(rs485->GPIO, rs485->GPIO_Pin);
+  //       rs485->PolState = RS485_STATE_READY;
+  //     }
+  //   }
+  // }
+  return rs485->rx_pkg_cplt_f;
+}
 
 RsError_t RS485Read(Rs485_t *rs485) {
   err = RsUnpkg(rs485, &rs485->rx_Func, rs485->rx_Data, &rs485->rx_Data_len);
@@ -475,6 +509,7 @@ RsError_t RS485WriteHandler(Rs485_t *rs485, uint16_t *data, uint8_t data_len) {
 }
 
 RsError_t RS485Write(Rs485_t *rs485) {
+  if (rs485->ic_type == NORMAL || rs485->ic_type == AUTO_POLARITY) gpio_bits_set(rs485->GPIO, rs485->GPIO_Pin);
   err = RsPkg(rs485, rs485->ip_addr, rs485->tx_Func, rs485->tx_Data, rs485->tx_Data_len);
 
   if (err != RS485_OK) {

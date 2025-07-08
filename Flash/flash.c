@@ -1,41 +1,42 @@
-/**
- **************************************************************************
- * @file     flash.c
- * @brief    flash program
- **************************************************************************
- *                       Copyright notice & Disclaimer
- *
- * The software Board Support Package (BSP) that is made available to
- * download from Artery official website is the copyrighted work of Artery.
- * Artery authorizes customers to use, copy, and distribute the BSP
- * software and its related documentation for the purpose of design and
- * development in conjunction with Artery microcontrollers. Use of the
- * software is governed by this copyright notice and the following disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED ON "AS IS" BASIS WITHOUT WARRANTIES,
- * GUARANTEES OR REPRESENTATIONS OF ANY KIND. ARTERY EXPRESSLY DISCLAIMS,
- * TO THE FULLEST EXTENT PERMITTED BY LAW, ALL EXPRESS, IMPLIED OR
- * STATUTORY OR OTHER WARRANTIES, GUARANTEES OR REPRESENTATIONS,
- * INCLUDING BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
- *
- **************************************************************************
- */
-
-// #include "at32f403a_407_board.h"
 #include "flash.h"
-
-/** @addtogroup AT32F407_periph_examples
- * @{
- */
-
-/** @addtogroup 407_FLASH_write_read
- * @{
- */
 
 #define SECTOR_SIZE 2048 /* this parameter depends on the specific model of the chip */
 
 uint16_t flash_buf[SECTOR_SIZE / 2];
+
+// #define PVM_FLASH_BASE 0x0000
+// flash_region_t flash_regions[] = {{(uint16_t *)&SensStat, sizeof(SensStat) / 2, PVM_FLASH_BASE}};
+
+// const uint16_t flash_region_count = sizeof(flash_regions) / sizeof(*flash_regions);
+
+void flash_init(void) {
+  // uint32_t addr = FLASH_BASE + PVM_FLASH_BASE;
+  // uint32_t end = 0;
+  // for (int i = 0; i < flash_region_count; i++) {
+  //   uint32_t region_end = flash_regions[i].offset + flash_regions[i].len * 2;
+  //   if (region_end > end) end = region_end;
+  // }
+  flash_unlock();
+  // for (; addr < FLASH_BASE + end; addr += SECTOR_SIZE) {
+  //   flash_sector_erase(addr);
+  // }
+  flash_internal_all_erase();
+  flash_lock();
+}
+
+void flash_pvm_save_all(void) {
+  flash_unlock();
+  for (int i = 0; i < flash_region_count; i++) {
+    uint32_t addr = FLASH_BASE + flash_regions[i].offset;
+    uint16_t *pdata = flash_regions[i].p_data;
+    uint16_t len = flash_regions[i].len;
+    for (int w = 0; w < len; w++) {
+      flash_halfword_program(addr, pdata[w]);
+      addr += 2;
+    }
+  }
+  flash_lock();
+}
 
 /**
  * @brief  read data using halfword mode
